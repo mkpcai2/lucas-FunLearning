@@ -437,6 +437,7 @@ function renderGame(id) {
     return;
   }
   openGameId = game.id;
+  document.body.classList.add("playing");
   const cat = categoryById(game.category);
   const max = gameMax(game);
   const entry = game.entry || `games/play.html?id=${encodeURIComponent(game.id)}`;
@@ -445,9 +446,14 @@ function renderGame(id) {
     ? ""
     : `<p class="hint">${esc(I18n.t("guest.hint")).replace(I18n.t("nav.login"), `<a href="#/login">${esc(I18n.t("nav.login"))}</a>`)}</p>`;
   app.innerHTML = `
-    <a class="btn btn-cream btn-small back" href="#/c/${game.category}">${iconBack()} ${esc(catName(cat))}</a>
+    <a class="btn btn-cream btn-small back play-back" href="#/c/${game.category}">${iconBack()} ${esc(catName(cat))}</a>
     <div class="play-layout">
       <section class="stage panel">
+        <div class="play-bar">
+          <a class="btn btn-cream btn-small" href="#/c/${game.category}">${iconBack()} ${esc(catName(cat))}</a>
+          <strong>${esc(gameText(game, "title"))}</strong>
+          <button class="btn btn-small" type="button" data-play-more aria-pressed="false">${esc(I18n.t("play.board"))}</button>
+        </div>
         <header class="stage-head">
           <div>
             <h1>${esc(gameText(game, "title"))}</h1>
@@ -541,6 +547,7 @@ function missing(text) {
 }
 
 function render() {
+  document.body.classList.remove("playing");
   renderChrome();
   renderAccount();
   const parts = (location.hash || "#/").replace(/^#\/?/, "").split("/").filter(Boolean);
@@ -581,6 +588,15 @@ function render() {
 }
 
 document.body.addEventListener("click", async (event) => {
+  const more = event.target.closest("[data-play-more]");
+  if (more) {
+    const side = document.querySelector(".play-layout .side");
+    if (side) {
+      const open = side.classList.toggle("is-open");
+      more.setAttribute("aria-pressed", open ? "true" : "false");
+    }
+    return;
+  }
   const petButton = event.target.closest("[data-pet]");
   if (petButton) {
     const chosen = await Store.choosePet(petButton.dataset.pet);
@@ -702,6 +718,7 @@ window.addEventListener("message", async (event) => {
   if (event.origin !== location.origin) return;
   if (!event.data) return;
   if (event.data.type === "game-height") {
+    if (window.innerWidth < 1100) return;
     const frame = document.querySelector(".stage iframe");
     const next = Math.min(760, Math.max(360, Number(event.data.height) || 0));
     if (frame && next) frame.style.height = next + "px";

@@ -1458,5 +1458,40 @@
   setInterval(report, 800);
 })();
 </script>
+
+<script id="phone-first">
+(function () {
+  if (!document.querySelector('meta[name="viewport"]')) {
+    var meta = document.createElement("meta");
+    meta.name = "viewport";
+    meta.content = "width=device-width, initial-scale=1, viewport-fit=cover";
+    document.head.appendChild(meta);
+  }
+  var style = document.createElement("style");
+  style.textContent = "@media (max-width:900px){html,body{max-width:100%;overflow-x:hidden;margin:0}button,input,select,textarea{font-size:16px;touch-action:manipulation}canvas,img,svg,video{max-width:100%}}";
+  document.head.appendChild(style);
+  function fit() {
+    var limit = document.documentElement.clientWidth || window.innerWidth;
+    if (limit > 900) return;
+    document.querySelectorAll("body *").forEach(function (el) {
+      var cs;
+      try { cs = getComputedStyle(el); } catch (err) { return; }
+      var cols = (cs.gridTemplateColumns || "").trim();
+      if (!cols || cols === "none") return;
+      var parts = cols.split(/\s+/).filter(Boolean);
+      if (parts.length < 2) return;
+      var wide = parts.some(function (part) { return parseFloat(part) >= 200; });
+      var box = el.getBoundingClientRect();
+      if (!wide && el.scrollWidth <= limit + 8 && box.width <= limit + 8) return;
+      el.style.gridTemplateColumns = parts.length >= 4 ? "1fr 1fr" : "1fr";
+      el.style.minWidth = "0";
+      el.style.maxWidth = "100%";
+    });
+  }
+  window.addEventListener("resize", fit);
+  window.addEventListener("load", function () { fit(); setTimeout(fit, 400); });
+  if (document.readyState !== "loading") setTimeout(fit, 50);
+})();
+</script>
 </body>
 </html>

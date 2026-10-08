@@ -635,6 +635,90 @@ html[data-size="desk"] .play-layout {
   grid-template-columns: minmax(0, 1.7fr) minmax(240px, 0.8fr);
 }
 
+.play-bar {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--cream);
+  border-bottom: var(--line);
+}
+
+.play-bar strong {
+  flex: 1;
+  min-width: 0;
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.play-bar .btn { flex: none; }
+
+@media (max-width: 1099px) {
+  body.playing {
+    overflow: hidden;
+    height: 100svh;
+    min-height: 100svh;
+  }
+  body.playing .hud,
+  body.playing .ground,
+  body.playing .sky-deco,
+  body.playing .play-back,
+  body.playing .stage-head,
+  body.playing .hint { display: none; }
+  body.playing main {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    min-height: 0;
+  }
+  body.playing .play-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    height: 100svh;
+    gap: 0;
+  }
+  body.playing .play-bar { display: flex; width: 100%; }
+  body.playing .stage {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: #140826;
+  }
+  body.playing .stage iframe {
+    flex: 1;
+    width: 100%;
+    height: 100% !important;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+    background: #fff;
+  }
+  body.playing .play-layout .side { display: none; }
+  body.playing .play-layout .side.is-open {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 72svh;
+    overflow: auto;
+    z-index: 6;
+    margin: 0;
+    border-radius: 18px 18px 0 0;
+  }
+}
+
 .welcome {
   max-width: 520px;
   margin: 18px auto;
