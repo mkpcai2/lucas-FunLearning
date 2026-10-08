@@ -707,7 +707,9 @@ window.addEventListener("message", async (event) => {
     if (frame && next) frame.style.height = next + "px";
     return;
   }
-  if (event.data.type !== "game-score") return;
+  const isBoardScore = event.data.type === "game-score" || event.data.type === "mkpc:score";
+  if (!isBoardScore) return;
+  if (event.data.metadata && event.data.metadata.leave && !Number(event.data.score)) return;
   if (!openGameId) return;
   const game = gameById(openGameId);
   if (!game) return;
