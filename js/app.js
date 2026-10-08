@@ -412,7 +412,7 @@ function renderCategory(id) {
       </div>
     </header>
     <div class="game-list">
-      ${games.map((game) => {
+      ${games.length ? games.map((game) => {
         const best = Store.myBest(game.id);
         const max = gameMax(game);
         const bestText = best ? tf("best.mine", { raw: best.raw, max }) : I18n.t("best.none");
@@ -425,7 +425,7 @@ function renderCategory(id) {
           </div>
           <a class="btn" href="#/g/${game.id}">${esc(I18n.t("play"))}</a>
         </article>`;
-      }).join("")}
+      }).join("") : `<div class="empty"><p>${esc(I18n.t("cat.empty"))}</p></div>`}
     </div>`;
 }
 
