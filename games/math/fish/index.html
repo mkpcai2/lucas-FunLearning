@@ -57,6 +57,18 @@ h1.title{font-size:34px;background:linear-gradient(#fff8d8,#ffc63f,#ff8a1f);-web
 #qFeedback.good{color:#7dffa8}#qFeedback.bad{color:#ffc63f}
 #qProg{font-size:12px;color:#7aa7d8;margin-bottom:4px}
 .winline{color:#ffc63f;font-weight:700}
+@media (max-width:900px){
+  #app{flex-direction:column}
+  #stagemini{flex:1 1 auto;min-height:0}
+  #panel{width:100%;max-height:34svh;border-left:0;border-top:2px solid #16406e;padding:8px}
+  #hud{gap:4px;padding:6px 8px;font-size:12px}
+  .chip{padding:3px 8px}
+  h1.title{font-size:26px;letter-spacing:1px}
+  .cardbox{padding:16px 12px}
+  .sub{font-size:13px}
+  #qText{font-size:24px;letter-spacing:0}
+  .big,.ghost{width:min(220px,86%)}
+}
 </style>
 </head>
 <body>
@@ -401,8 +413,21 @@ function resetAll(){Object.assign(G,{coins:100,earned:0,caught:0,shots:0,hits:0,
  ['menu','helpScr','exam','achPop'].forEach(id=>$(id).style.display='none');G.speciesSeen={};G.achDone={};G.achQueue=[];popOpen=false;G.paused=false;updateBadges();}
 
 /* ---------- input ---------- */
-cv.addEventListener('mousemove',e=>{const r=cv.getBoundingClientRect();G.mouse.x=e.clientX-r.left;G.mouse.y=e.clientY-r.top});
-cv.addEventListener('mousedown',e=>{if(G.mode==='play')fire()});
+function aimAt(e){
+  const p = e.touches ? e.touches[0] : e;
+  const r = cv.getBoundingClientRect();
+  G.mouse.x = p.clientX - r.left;
+  G.mouse.y = p.clientY - r.top;
+}
+cv.style.touchAction = "none";
+cv.addEventListener("pointermove", aimAt);
+cv.addEventListener("pointerdown", (e) => {
+  aimAt(e);
+  if (G.mode === "play") {
+    e.preventDefault();
+    fire();
+  }
+});
 $('startBtn').onclick=()=>{resetAll()};
 $('helpBtn').onclick=()=>$('helpScr').style.display='flex';
 $('helpBack').onclick=()=>$('helpScr').style.display='none';
