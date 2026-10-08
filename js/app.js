@@ -139,7 +139,7 @@ function renderPicks() {
       const cat = categoryById(item.game.category);
       return `<a class="pick-card" href="#/g/${item.game.id}">
         <span class="pick-rank">${index + 1}</span>
-        <img src="${cat ? cat.icon : ""}" alt="">
+        <img src="${item.game.icon || (cat ? cat.icon : "")}" alt="">
         <span class="pick-copy">
           <strong>${esc(gameText(item.game, "title"))}</strong>
           <span class="pick-cat">${esc(catName(cat))}</span>
@@ -417,7 +417,7 @@ function renderCategory(id) {
         const max = gameMax(game);
         const bestText = best ? tf("best.mine", { raw: best.raw, max }) : I18n.t("best.none");
         return `<article class="game-row">
-          <img src="${cat.icon}" alt="">
+          <img src="${game.icon || cat.icon}" alt="">
           <div>
             <h2>${esc(gameText(game, "title"))}</h2>
             <p>${esc(gameText(game, "blurb"))}</p>
