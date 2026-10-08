@@ -493,13 +493,18 @@ function renderBoard() {
 function renderAuth(mode) {
   openGameId = null;
   const isRegister = mode === "register";
+  const cloud = Store.cloud;
+  const lead = cloud
+    ? (isRegister ? "auth.registerLeadCloud" : "auth.loginLeadCloud")
+    : (isRegister ? "auth.registerLead" : "auth.loginLead");
   app.innerHTML = `
     <section class="auth panel">
       <img src="assets/mascot.png?v=corgi" alt="">
       <h1>${esc(I18n.t(isRegister ? "auth.create" : "auth.welcome"))}</h1>
-      <p>${esc(I18n.t(isRegister ? "auth.registerLead" : "auth.loginLead"))}</p>
+      <p>${esc(I18n.t(lead))}</p>
       <form id="auth-form" data-mode="${mode}">
-        <label>${esc(I18n.t("auth.username"))}<input name="username" autocomplete="username" maxlength="12" required></label>
+        ${cloud ? `<label>${esc(I18n.t("auth.email"))}<input name="email" type="email" autocomplete="email" required></label>` : ""}
+        ${!cloud || isRegister ? `<label>${esc(I18n.t("auth.username"))}<input name="username" autocomplete="username" maxlength="12" required></label>` : ""}
         <label>${esc(I18n.t("auth.password"))}<input name="password" type="password" autocomplete="${isRegister ? "new-password" : "current-password"}" minlength="6" maxlength="32" required></label>
         ${isRegister ? `<label>${esc(I18n.t("auth.again"))}<input name="again" type="password" autocomplete="new-password" minlength="6" maxlength="32" required></label>` : ""}
         <p class="form-error" id="form-error"></p>
@@ -508,9 +513,9 @@ function renderAuth(mode) {
       <p class="switch">${isRegister
         ? `${esc(I18n.t("auth.toLogin"))}<a href="#/login">${esc(I18n.t("auth.toLoginLink"))}</a>`
         : `${esc(I18n.t("auth.toRegister"))}<a href="#/register">${esc(I18n.t("auth.toRegisterLink"))}</a>`}</p>
-      <p class="fine">${esc(I18n.t("auth.fine"))}</p>
+      <p class="fine">${esc(I18n.t(cloud ? "auth.fineCloud" : "auth.fine"))}</p>
     </section>`;
-  const input = app.querySelector("input[name=username]");
+  const input = app.querySelector(cloud ? "input[name=email]" : "input[name=username]");
   if (input) input.focus();
 }
 
@@ -575,10 +580,10 @@ function render() {
   window.scrollTo(0, 0);
 }
 
-document.body.addEventListener("click", (event) => {
+document.body.addEventListener("click", async (event) => {
   const petButton = event.target.closest("[data-pet]");
   if (petButton) {
-    const chosen = Store.choosePet(petButton.dataset.pet);
+    const chosen = await Store.choosePet(petButton.dataset.pet);
     if (!chosen.ok) {
       showToast(I18n.t("pet.pick.err"));
       return;
@@ -602,7 +607,7 @@ document.body.addEventListener("click", (event) => {
   const rateHit = event.target.closest("#rate-box [data-rate]");
   if (rateHit && openGameId) {
     const game = gameById(openGameId);
-    const rated = Store.setRating(openGameId, rateHit.dataset.rate);
+    const rated = await Store.setRating(openGameId, rateHit.dataset.rate);
     if (!rated.ok) {
       showToast(I18n.t("rate.err." + rated.error));
       return;
@@ -650,6 +655,7 @@ document.body.addEventListener("submit", async (event) => {
   const data = new FormData(form);
   const username = String(data.get("username") || "");
   const password = String(data.get("password") || "");
+  const email = String(data.get("email") || "");
   const error = form.querySelector("#form-error");
   let result;
   if (form.dataset.mode === "register") {
@@ -657,9 +663,9 @@ document.body.addEventListener("submit", async (event) => {
       error.textContent = I18n.t("err.mismatch");
       return;
     }
-    result = await Store.register(username, password);
+    result = await Store.register(username, password, email);
   } else {
-    result = await Store.login(username, password);
+    result = await Store.login(username, password, email);
   }
   if (!result.ok) {
     error.textContent = I18n.t("err." + result.error);
@@ -692,7 +698,7 @@ document.body.addEventListener("click", (event) => {
   if (!href.startsWith("#/g/")) sessionStorage.removeItem("pixel-from");
 });
 
-window.addEventListener("message", (event) => {
+window.addEventListener("message", async (event) => {
   if (event.origin !== location.origin) return;
   if (!event.data) return;
   if (event.data.type === "game-height") {
@@ -706,13 +712,13 @@ window.addEventListener("message", (event) => {
   const game = gameById(openGameId);
   if (!game) return;
   const max = gameMax(game);
-  const result = Store.submitScore(game.id, event.data.score, max);
+  const result = await Store.submitScore(game.id, event.data.score, max);
   const board = document.querySelector("#game-board");
   if (board) board.innerHTML = boardRows(Store.gameBoard(game.id), "game", max);
   const rate = document.querySelector("#rate-box");
   if (rate) rate.outerHTML = rateMarkup(game);
   renderAccount();
-  const pet = result.ok ? Store.gainPetXp() : null;
+  const pet = result.ok ? await Store.gainPetXp() : null;
   const extra = petToast(pet);
   if (!result.ok && result.reason === "auth") {
     showToast(tf("toast.guest", { raw: result.raw, max }));
@@ -728,4 +734,4 @@ window.addEventListener("message", (event) => {
 });
 
 applySize(localStorage.getItem("pixel-study-size") || "phone");
-render();
+Store.ready.then(render);

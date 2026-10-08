@@ -1,5 +1,9 @@
 const Store = (() => {
   const KEY = "pixel-study-v1";
+  const cloudUrl = typeof SUPABASE_URL === "string" ? SUPABASE_URL.trim() : "";
+  const cloudKey = typeof SUPABASE_ANON_KEY === "string" ? SUPABASE_ANON_KEY.trim() : "";
+  const cloudOn = cloudUrl.startsWith("https://") && cloudKey.length > 20 && typeof supabase !== "undefined";
+  const db = cloudOn ? supabase.createClient(cloudUrl, cloudKey) : null;
   let state = load();
 
   function load() {
@@ -17,7 +21,65 @@ const Store = (() => {
   }
 
   function save() {
+    if (db) return;
     localStorage.setItem(KEY, JSON.stringify(state));
+  }
+
+  function stamp(value) {
+    const time = new Date(value).getTime();
+    return Number.isFinite(time) ? time : Date.now();
+  }
+
+  async function pull() {
+    if (!db) return;
+    const [profiles, scores, ratings, sessionResult] = await Promise.all([
+      db.from("profiles").select("id,username"),
+      db.from("scores").select("user_id,game_id,raw,points,at"),
+      db.from("ratings").select("user_id,game_id,stars,at"),
+      db.auth.getSession(),
+    ]);
+    state.users = (profiles.data || []).map((row) => ({ id: row.id, username: row.username }));
+    state.scores = (scores.data || []).map((row) => ({
+      userId: row.user_id,
+      gameId: row.game_id,
+      raw: row.raw,
+      points: row.points,
+      at: stamp(row.at),
+    }));
+    state.ratings = (ratings.data || []).map((row) => ({
+      userId: row.user_id,
+      gameId: row.game_id,
+      stars: Number(row.stars),
+      at: stamp(row.at),
+    }));
+    state.session = sessionResult.data.session ? sessionResult.data.session.user.id : null;
+    state.pets = [];
+    if (state.session) {
+      const pet = await db.from("pets").select("user_id,species,xp,day,day_xp").eq("user_id", state.session).maybeSingle();
+      if (pet.data) {
+        state.pets = [{
+          userId: pet.data.user_id,
+          species: pet.data.species || "",
+          xp: pet.data.xp || 0,
+          day: pet.data.day || "",
+          dayXp: pet.data.day_xp || 0,
+        }];
+      }
+    }
+  }
+
+  function persistPet(row) {
+    if (!db) {
+      save();
+      return Promise.resolve({ error: null });
+    }
+    return db.from("pets").upsert({
+      user_id: row.userId,
+      species: row.species || null,
+      xp: row.xp,
+      day: row.day,
+      day_xp: row.dayXp,
+    });
   }
 
   function bytesToHex(buffer) {
@@ -54,7 +116,14 @@ const Store = (() => {
     return "";
   }
 
-  async function register(username, password) {
+  function validEmail(email) {
+    const mail = String(email || "").trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) return "";
+    return mail;
+  }
+
+  async function register(username, password, email) {
+    if (db) return registerCloud(username, password, email);
     const nameError = validName(username);
     if (nameError) return { ok: false, error: nameError };
     if (password.length < 6) return { ok: false, error: "password-short" };
@@ -71,7 +140,41 @@ const Store = (() => {
     return { ok: true, user };
   }
 
-  async function login(username, password) {
+  async function registerCloud(username, password, email) {
+    const nameError = validName(username);
+    if (nameError) return { ok: false, error: nameError };
+    if (password.length < 6) return { ok: false, error: "password-short" };
+    if (password.length > 32) return { ok: false, error: "password-long" };
+    const mail = validEmail(email);
+    if (!mail) return { ok: false, error: "email" };
+    const name = username.trim();
+    const taken = await db.from("profiles").select("id").ilike("username", name).maybeSingle();
+    if (taken.data) return { ok: false, error: "taken" };
+    const { data, error } = await db.auth.signUp({
+      email: mail,
+      password,
+      options: { data: { username: name } },
+    });
+    if (error) {
+      const message = String(error.message || "").toLowerCase();
+      if (message.includes("already")) return { ok: false, error: "email-taken" };
+      return { ok: false, error: "bad-login" };
+    }
+    if (!data.session) return { ok: false, error: "confirm" };
+    await db.from("profiles").upsert({ id: data.user.id, username: name });
+    await pull();
+    return { ok: true, user: current() };
+  }
+
+  async function login(username, password, email) {
+    if (db) {
+      const mail = validEmail(email || username);
+      if (!mail) return { ok: false, error: "email" };
+      const { error } = await db.auth.signInWithPassword({ email: mail, password });
+      if (error) return { ok: false, error: "bad-login" };
+      await pull();
+      return { ok: true, user: current() };
+    }
     const name = username.trim();
     const user = state.users.find((item) => item.username.toLowerCase() === name.toLowerCase());
     if (!user) return { ok: false, error: "bad-login" };
@@ -82,12 +185,28 @@ const Store = (() => {
     return { ok: true, user };
   }
 
-  function logout() {
+  async function logout() {
+    if (db) await db.auth.signOut();
     state.session = null;
+    if (db) state.pets = [];
     save();
   }
 
-  function submitScore(gameId, raw, max) {
+  function persistScore(row) {
+    if (!db) {
+      save();
+      return Promise.resolve({ error: null });
+    }
+    return db.from("scores").upsert({
+      user_id: row.userId,
+      game_id: row.gameId,
+      raw: row.raw,
+      points: row.points,
+      at: new Date(row.at).toISOString(),
+    });
+  }
+
+  async function submitScore(gameId, raw, max) {
     const user = current();
     const safeMax = Math.max(1, Number(max) || 1);
     const value = Math.max(0, Math.min(safeMax, Math.round(Number(raw))));
@@ -96,15 +215,18 @@ const Store = (() => {
     const points = Math.round((value / safeMax) * 100);
     const existing = state.scores.find((item) => item.userId === user.id && item.gameId === gameId);
     if (!existing) {
-      state.scores.push({ userId: user.id, gameId, raw: value, points, at: Date.now() });
-      save();
+      const row = { userId: user.id, gameId, raw: value, points, at: Date.now() };
+      state.scores.push(row);
+      const saved = await persistScore(row);
+      if (saved.error) return { ok: false, reason: "bad" };
       return { ok: true, improved: true, raw: value, points, best: value, max: safeMax };
     }
     if (value > existing.raw) {
       existing.raw = value;
       existing.points = points;
       existing.at = Date.now();
-      save();
+      const saved = await persistScore(existing);
+      if (saved.error) return { ok: false, reason: "bad" };
       return { ok: true, improved: true, raw: value, points, best: value, max: safeMax };
     }
     return { ok: true, improved: false, raw: value, points: existing.points, best: existing.raw, max: safeMax };
@@ -149,7 +271,7 @@ const Store = (() => {
     return row ? row.stars : null;
   }
 
-  function setRating(gameId, stars) {
+  async function setRating(gameId, stars) {
     const user = current();
     if (!user) return { ok: false, error: "auth" };
     if (!myBest(gameId)) return { ok: false, error: "need-play" };
@@ -159,13 +281,20 @@ const Store = (() => {
       return { ok: false, error: "bad-stars" };
     }
     const existing = state.ratings.find((item) => item.userId === user.id && item.gameId === gameId);
-    if (existing) {
-      existing.stars = value;
-      existing.at = Date.now();
-    } else {
-      state.ratings.push({ userId: user.id, gameId, stars: value, at: Date.now() });
+    const row = existing || { userId: user.id, gameId, stars: value, at: Date.now() };
+    row.stars = value;
+    row.at = Date.now();
+    if (!existing) state.ratings.push(row);
+    if (!db) save();
+    else {
+      const saved = await db.from("ratings").upsert({
+        user_id: row.userId,
+        game_id: row.gameId,
+        stars: row.stars,
+        at: new Date(row.at).toISOString(),
+      });
+      if (saved.error) return { ok: false, error: "bad-stars" };
     }
-    save();
     return { ok: true, stars: value, ...ratingOf(gameId) };
   }
 
@@ -202,6 +331,7 @@ const Store = (() => {
     if (row.day !== today) {
       row.day = today;
       row.dayXp = 0;
+      persistPet(row);
     }
     return row;
   }
@@ -212,7 +342,7 @@ const Store = (() => {
     const existing = findPet(user);
     if (existing && !existing.species) {
       existing.species = "dog";
-      save();
+      persistPet(existing);
     }
     const row = petRow(user);
     if (!row) return { needsChoice: true };
@@ -231,23 +361,22 @@ const Store = (() => {
     };
   }
 
-  function choosePet(species) {
+  async function choosePet(species) {
     const user = current();
     if (!user) return { ok: false, error: "auth" };
     if (!PET_SPECIES.includes(species)) return { ok: false, error: "bad-pet" };
     const existing = findPet(user);
     if (existing && existing.species) return { ok: false, error: "chosen" };
     const today = todayKey();
-    if (existing) {
-      existing.species = species;
-    } else {
-      state.pets.push({ userId: user.id, species, xp: 0, day: today, dayXp: 0 });
-    }
-    save();
+    const row = existing || { userId: user.id, species, xp: 0, day: today, dayXp: 0 };
+    row.species = species;
+    if (!existing) state.pets.push(row);
+    const saved = await persistPet(row);
+    if (saved.error) return { ok: false, error: "bad-pet" };
     return { ok: true, species };
   }
 
-  function gainPetXp() {
+  async function gainPetXp() {
     const user = current();
     if (!user) return { ok: false, reason: "auth" };
     const row = petRow(user);
@@ -257,7 +386,8 @@ const Store = (() => {
     if (gain > 0) {
       row.xp += gain;
       row.dayXp += gain;
-      save();
+      const saved = await persistPet(row);
+      if (saved.error) return { ok: false, reason: "nopet" };
     }
     const stage = stageIndex(row.xp);
     return {
@@ -282,6 +412,8 @@ const Store = (() => {
   }
 
   return {
+    cloud: Boolean(db),
+    ready: db ? pull().catch(() => {}) : Promise.resolve(),
     current, register, login, logout, submitScore, gameBoard, globalBoard, myBest, mySummary,
     ratingOf, myRating, setRating, petView, choosePet, gainPetXp,
   };
