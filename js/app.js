@@ -290,11 +290,19 @@ function renderPetPage() {
       <div class="pet-bar" role="progressbar" aria-valuenow="${pet.xp}" aria-valuemin="0" aria-valuemax="${pet.next || pet.xp}" aria-label="${esc(stageName)}"><span style="width:${Math.max(0, Math.min(100, Math.round(pet.into * 100)))}%"></span></div>
       <p>${esc(pet.next == null ? I18n.t("pet.max") : tf("pet.next", { left: pet.next - pet.xp }))}</p>
       <p class="pet-today">${esc(tf("pet.today", { got: pet.dayXp, cap: pet.daily }))}</p>
+      <p class="coin-line">${esc(tf("shop.coins", { n: pet.coins || 0 }))}</p>
       <div class="pet-stage-wrap">
         <img class="pet-still" src="${petSrc(pet.species, pet.stage)}" alt="${esc(speciesName)}">
       </div>
+      <a class="btn btn-mint shop-open" href="#/shop">${esc(I18n.t("shop.open"))}</a>
       <a class="btn pet-go" href="#/c">${esc(I18n.t("pet.go"))}</a>
     </section>`;
+}
+
+function coinToast(pet) {
+  if (!pet || !pet.ok) return "";
+  if (pet.coinGain > 0) return " " + tf("shop.toast", { n: pet.coinGain });
+  return " " + I18n.t("shop.toastFull");
 }
 
 function petToast(pet) {
@@ -376,6 +384,7 @@ function renderHub() {
           <h1>${esc(I18n.t("hub.title"))}</h1>
           <p>${esc(I18n.t("hub.lead"))}</p>
         </header>
+        <a class="btn shop-open" href="#/shop">${esc(I18n.t("shop.open"))}</a>
         <div class="cat-grid">${catCards()}</div>
         <p class="foot-links"><a href="#/guide">${esc(I18n.t("home.guide"))}</a></p>
       </div>
@@ -541,6 +550,24 @@ function renderUserPet(id) {
     </section>`;
 }
 
+function renderShop(cat) {
+  openGameId = null;
+  const pet = Store.petView();
+  const active = cat === "home" || cat === "food" ? cat : "look";
+  const tabs = ["look", "home", "food"].map((id) => `
+    <a class="shop-cat${id === active ? " on" : ""}" href="#/shop/${id}"${id === active ? ' aria-current="page"' : ""}>${esc(I18n.t("shop." + id))}</a>`).join("");
+  const note = active === "look" ? I18n.t("shop.soon") : I18n.t("shop.later");
+  app.innerHTML = `
+    <a class="btn btn-cream btn-small back" href="#/c">${iconBack()} ${esc(I18n.t("nav.all"))}</a>
+    <section class="pet-room panel">
+      <h1>${esc(I18n.t("shop.title"))}</h1>
+      <p class="coin-line">${esc(tf("shop.coins", { n: pet && pet.coins ? pet.coins : 0 }))}</p>
+      <p>${esc(I18n.t("shop.lead"))}</p>
+      <div class="shop-cats">${tabs}</div>
+      <p class="shop-empty">${esc(note)}</p>
+    </section>`;
+}
+
 function renderAuth(mode) {
   openGameId = null;
   const isRegister = mode === "register";
@@ -626,6 +653,7 @@ function render() {
   else if (head === "board") renderBoard();
   else if (head === "u") renderUserPet(id);
   else if (head === "rates") renderRates();
+  else if (head === "shop") renderShop(id);
   else if (head === "login") renderAuth("login");
   else if (head === "register") renderAuth("register");
   else if (head === "guide") renderGuide();
@@ -784,7 +812,7 @@ window.addEventListener("message", async (event) => {
   if (rate) rate.outerHTML = rateMarkup(game);
   renderAccount();
   const pet = result.ok ? await Store.gainPetXp() : null;
-  const extra = petToast(pet);
+  const extra = petToast(pet) + coinToast(pet);
   if (!result.ok && result.reason === "auth") {
     showToast(tf("toast.guest", { raw: result.raw, max }));
     return;

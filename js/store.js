@@ -53,28 +53,45 @@ const Store = (() => {
       at: stamp(row.at),
     }));
     state.session = sessionResult.data.session ? sessionResult.data.session.user.id : null;
-    const pets = await db.from("pets").select("user_id,species,xp,day,day_xp");
+    let pets = await db.from("pets").select("user_id,species,xp,day,day_xp,coins,day_coins");
+    if (pets.error) pets = await db.from("pets").select("user_id,species,xp,day,day_xp");
     state.pets = (pets.data || []).map((row) => ({
       userId: row.user_id,
       species: row.species || "",
       xp: row.xp || 0,
       day: row.day || "",
       dayXp: row.day_xp || 0,
+      coins: row.coins || 0,
+      dayCoins: row.day_coins || 0,
     }));
   }
 
-  function persistPet(row) {
+  async function persistPet(row) {
     if (!db) {
       save();
-      return Promise.resolve({ error: null });
+      return { error: null };
     }
-    return db.from("pets").upsert({
+    const full = {
       user_id: row.userId,
       species: row.species || null,
       xp: row.xp,
       day: row.day,
       day_xp: row.dayXp,
-    });
+      coins: row.coins || 0,
+      day_coins: row.dayCoins || 0,
+    };
+    let saved = await db.from("pets").upsert(full);
+    const message = String(saved.error && saved.error.message || "").toLowerCase();
+    if (saved.error && (message.includes("coin") || message.includes("column") || message.includes("schema"))) {
+      saved = await db.from("pets").upsert({
+        user_id: full.user_id,
+        species: full.species,
+        xp: full.xp,
+        day: full.day,
+        day_xp: full.day_xp,
+      });
+    }
+    return saved;
   }
 
   function bytesToHex(buffer) {
@@ -295,6 +312,8 @@ const Store = (() => {
 
   const PET_GAIN = 20;
   const PET_DAILY = 100;
+  const COIN_GAIN = 10;
+  const COIN_DAILY = 100;
   const PET_NEED = [0, 100, 400, 1100, 2500];
   const PET_IDS = ["bubble", "baby", "grow", "adult", "scholar"];
   const PET_SPECIES = ["tabby", "fluff", "dog"];
@@ -334,6 +353,7 @@ const Store = (() => {
     if (row.day !== today) {
       row.day = today;
       row.dayXp = 0;
+      row.dayCoins = 0;
       persistPet(row);
     }
     return row;
@@ -360,6 +380,7 @@ const Store = (() => {
       xp: row.xp,
       dayXp: row.dayXp,
       daily: PET_DAILY,
+      coins: row.coins || 0,
       next,
       into: next == null ? 1 : (row.xp - prev) / (next - prev),
     };
@@ -372,7 +393,7 @@ const Store = (() => {
     const existing = findPet(user);
     if (existing && existing.species) return { ok: false, error: "chosen" };
     const today = todayKey();
-    const row = existing || { userId: user.id, species, xp: 0, day: today, dayXp: 0 };
+    const row = existing || { userId: user.id, species, xp: 0, day: today, dayXp: 0, coins: 0, dayCoins: 0 };
     row.species = species;
     if (!existing) state.pets.push(row);
     const saved = await persistPet(row);
@@ -387,9 +408,16 @@ const Store = (() => {
     if (!row) return { ok: false, reason: "nopet" };
     const before = stageIndex(row.xp);
     const gain = Math.min(PET_GAIN, Math.max(0, PET_DAILY - row.dayXp));
+    const coinGain = Math.min(COIN_GAIN, Math.max(0, COIN_DAILY - (row.dayCoins || 0)));
     if (gain > 0) {
       row.xp += gain;
       row.dayXp += gain;
+    }
+    if (coinGain > 0) {
+      row.coins = (row.coins || 0) + coinGain;
+      row.dayCoins = (row.dayCoins || 0) + coinGain;
+    }
+    if (gain > 0 || coinGain > 0) {
       const saved = await persistPet(row);
       if (saved.error) return { ok: false, reason: "nopet" };
     }
@@ -399,6 +427,10 @@ const Store = (() => {
       gain,
       dayXp: row.dayXp,
       daily: PET_DAILY,
+      coins: row.coins || 0,
+      coinGain,
+      coinDaily: COIN_DAILY,
+      dayCoins: row.dayCoins || 0,
       xp: row.xp,
       stage,
       species: row.species,

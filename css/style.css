@@ -1016,6 +1016,28 @@ html[data-size="desk"] .egg-list { grid-template-columns: repeat(auto-fit, minma
   padding: 16px 12px;
   background: var(--pink);
 }
+.shop-open { width: 100%; margin: 8px 0 12px; }
+.coin-line { font-size: 22px; margin: 4px 0; }
+.shop-cats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.shop-cat {
+  display: grid;
+  place-items: center;
+  min-height: 48px;
+  padding: 8px 4px;
+  text-decoration: none;
+  color: inherit;
+  background: #fff;
+  border: var(--line);
+  border-radius: 14px;
+  font-size: 18px;
+}
+.shop-cat.on { background: var(--yellow); }
+.shop-empty { font-size: 22px; line-height: 1.5; margin: 22px 0 8px; }
 
 html[data-size="desk"] .pet-still { width: 320px; height: 320px; }
 

@@ -30,7 +30,9 @@ create table if not exists public.pets (
   species text,
   xp int not null default 0,
   day text not null default '',
-  day_xp int not null default 0
+  day_xp int not null default 0,
+  coins int not null default 0,
+  day_coins int not null default 0
 );
 
 alter table public.profiles enable row level security;
