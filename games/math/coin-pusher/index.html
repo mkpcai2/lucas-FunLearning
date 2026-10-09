@@ -248,37 +248,38 @@
   .quiz {
     background: linear-gradient(180deg, rgba(74, 32, 148, .78), rgba(18, 8, 46, .92));
     border: 2px solid rgba(255, 215, 106, .55);
-    border-radius: 24px;
-    padding: 14px;
+    border-radius: 16px;
+    padding: 8px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, .28);
   }
-  .quiz-head { display: flex; justify-content: space-between; gap: 8px; color: #ffe9a0; font-weight: 800; }
-  .q-text { font-size: clamp(28px, 4vw, 44px); text-align: center; margin: 10px 0 12px; font-weight: 900; }
-  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .quiz-head { display: flex; justify-content: space-between; gap: 8px; color: #ffe9a0; font-weight: 800; font-size: 13px; }
+  .q-text { font-size: 22px; text-align: center; margin: 4px 0 6px; font-weight: 900; }
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   button.opt {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    border-radius: 16px;
+    gap: 8px;
+    border-radius: 12px;
     background: linear-gradient(#fffaf0, #f3d48a);
-    box-shadow: 0 4px 0 #b47b12;
-    font-size: 22px;
-    min-height: 56px;
+    box-shadow: 0 3px 0 #b47b12;
+    font-size: 18px;
+    min-height: 40px;
+    padding: 4px 8px;
   }
   .opt-key {
     display: inline-grid;
     place-items: center;
-    width: 34px;
-    height: 34px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
     background: #7a3e00;
     color: #fff6d0;
-    font-size: 18px;
+    font-size: 13px;
     line-height: 1;
     flex: 0 0 auto;
   }
-  .opt-val { font-size: 28px; font-variant-numeric: tabular-nums; }
+  .opt-val { font-size: 20px; font-variant-numeric: tabular-nums; }
   button.opt.is-selected { outline: 3px solid #fff3b0; }
   button.opt.is-right { background: linear-gradient(#d9ffe3, #22c55e); color: #053015; }
   button.opt.is-right .opt-key { background: #053015; color: #e9fff0; }
@@ -286,11 +287,11 @@
   button.opt.is-wrong .opt-key { background: #4a0614; color: #ffe4ea; }
   .q-actions { margin-top: 10px; }
   .track-label { font-size: 15px; margin-bottom: 4px; }
-  .track { position: relative; height: 62px; }
+  .track { position: relative; height: 26px; }
   .track-bar {
     position: absolute;
-    left: 0; right: 0; top: 20px;
-    height: 16px;
+    left: 0; right: 0; top: 8px;
+    height: 10px;
     border-radius: 99px;
     background: linear-gradient(90deg, #6aa4ff 0 33.33%, #ffd76a 33.33% 66.66%, #ff8ad8 66.66% 100%);
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, .35);
@@ -308,8 +309,8 @@
     position: absolute;
     top: 4px;
     left: 0;
-    width: 36px;
-    height: 36px;
+    width: 22px;
+    height: 22px;
     border: 0;
     border-radius: 0;
     transform: translateX(-50%);
@@ -334,7 +335,8 @@
     background: linear-gradient(#5ee0ff, #1a8cff);
     box-shadow: 0 4px 0 #0b4f9c;
   }
-  .result { min-height: 4.6em; font-size: 18px; line-height: 1.55; background: rgba(0, 0, 0, .22); border-radius: 12px; padding: 8px 10px; margin: 10px 0 0; }
+  .result { min-height: 0; font-size: 14px; line-height: 1.4; background: rgba(0, 0, 0, .22); border-radius: 8px; padding: 4px 8px; margin: 6px 0 0; }
+  .result:empty { display: none; }
   .result.good { color: #b6ffbf; }
   .result.bad { color: #ffe1a8; }
   .round-note { min-height: 1.4em; margin: 6px 0 0; color: #ffe9a0; }
@@ -405,22 +407,17 @@
     .top-actions #btn-home,
     .top-actions #btn-restart,
     .top-actions #btn-shot { display: none; }
-    .glass { height: min(22dvh, 190px); min-height: 150px; }
-    .q-text { font-size: 28px; margin: 4px 0 8px; }
-    .quiz { padding: 8px; }
+    .glass { height: min(52dvh, 520px); min-height: 280px; }
+    .q-text { font-size: 20px; margin: 2px 0 6px; }
+    .quiz { padding: 6px; }
     .q-actions {
-      position: fixed;
-      left: 10px;
-      right: 10px;
-      bottom: 8px;
-      z-index: 6;
-      background: rgba(20, 8, 40, .96);
-      border: 1px solid rgba(255, 215, 106, .5);
-      border-radius: 16px;
-      padding: 8px 8px 10px;
-      box-shadow: 0 10px 28px rgba(0, 0, 0, .45);
+      position: static;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      padding: 4px 0 0;
     }
-    #screen-game .wrap { padding-bottom: 168px; }
+    #screen-game .wrap { padding: 8px; }
     .previews { grid-template-columns: 1fr 1fr; }
   }
   @media (max-width: 520px) {
@@ -485,7 +482,7 @@
     <div class="wrap hero">
       <p class="subtitle">小學四則運算 × 推幣機</p>
       <h1 class="title">數學推幣機：金幣大挑戰</h1>
-      <p class="lead">答對數學題，一枚金幣就會從移動中的落點掉進推幣機。推板會前後推動金幣，金幣掉出前方出口才加進錢包。看準位置再按提交，收集金幣與成就。</p>
+      <p class="lead">答對數學題，點選項的瞬間，一枚金幣就會從移動中的落點掉進推幣機。推板會前後推動金幣，金幣掉出前方出口才加進錢包。</p>
       <div class="previews">
         <article class="preview">
           <canvas class="coin-face" width="16" height="16" data-type="gold" aria-hidden="true"></canvas>
@@ -534,10 +531,10 @@
           <li>這不是點擊投幣。投幣口不能按。金色落點會在投幣口範圍內左右來回移動，用正弦速度，兩端較慢，從一端到另一端大約 4.5 秒。</li>
           <li>機台上的金色標記，和題目區的落點軌一起移動。統計裡的目前落點會顯示偏左、正中或偏右。</li>
           <li>題目是固定的 20 題小學四則運算，每題 4 個選項。題目順序和選項都會洗牌，做完一輪再重洗。</li>
-          <li>先選擇答案，「提交」才會亮起。選項是 A、B、C、D。也可以按 A 到 D，或數字鍵 1 到 4 選擇，按 Enter 提交。</li>
-          <li>答對：答對題數加 1，並在按下提交當下的落點掉進 1 枚金幣。金幣種類依機率抽出。答對當下錢包不會立刻增加。</li>
-          <li>答錯：這一題沒有金幣落下，錢包也不減少。畫面會寫「很接近！正確答案是 X，再試試下一題！」</li>
-          <li>提交之後才能按「下一題」。</li>
+          <li>點選項就會作答。選項是 A、B、C、D，也可以按 A 到 D，或數字鍵 1 到 4。</li>
+          <li>答對：答對題數加 1，並在點下選項的瞬間從落點掉進 1 枚金幣。金幣種類依機率抽出。答對當下錢包不會立刻增加。</li>
+          <li>先選擇答案，點下去就會判定。答對時，金幣在按下的瞬間從落點掉進機台。答錯沒有金幣落下。</li>
+          <li>答完會自動換下一題，不用再按提交或下一題。</li>
           <li>普通金幣 75% 為 +1，銀幣 15% 為 +3，紅寶幣 8% 為 +5，彩虹幣 2% 顯示「彩虹大獎！+30」並入帳 30，同時灑下 5 枚只有視覺效果的小金幣。</li>
           <li>2 秒內連續掉出 3 枚以上，顯示「連續掉幣！」；6 枚以上顯示「狂爆掉幣！」。短時間掉出很多枚時，機台會震動。</li>
           <li>遊戲沒有結束條件。達成成就会彈出視窗並灑下彩紙。三條進度是：累計從推幣機獲得 300 金幣、累計答對 10 題、成功掉落 3 枚彩虹幣。</li>
@@ -613,27 +610,21 @@
         <div class="quiz">
           <div class="quiz-head">
             <span id="q-progress">第 1 / 20 題</span>
-            <span>先選答案，再提交</span>
+            <span>點選項就掉金幣</span>
           </div>
           <p id="round-note" class="round-note"></p>
           <p id="q-text" class="q-text">準備中</p>
           <div id="options" class="options"></div>
           <div class="q-actions">
             <div class="track-wrap">
-              <div class="track-label">落點軌　目前落點：<strong id="zone-label">偏左</strong></div>
+              <div class="track-label">落點　<strong id="zone-label">偏左</strong></div>
               <div class="track" id="track">
                 <div class="track-bar"></div>
                 <canvas class="knob" id="knob" width="16" height="16"></canvas>
-                <div class="track-zones"><span>偏左</span><span>正中</span><span>偏右</span></div>
               </div>
-            </div>
-            <div class="action-row">
-              <button type="button" id="btn-submit" disabled>提交</button>
-              <button type="button" id="btn-next" disabled>下一題</button>
             </div>
           </div>
           <p id="result" class="result" aria-live="polite"></p>
-          <p class="keyhint">鍵盤：按 A 到 D 或 1 到 4 選答案，按 Enter 提交</p>
         </div>
       </div>
     </div>
@@ -983,18 +974,11 @@
       b.appendChild(key);
       b.appendChild(num);
       var graded = state.phase === "result";
-      if (state.selected === i) b.classList.add("is-selected");
       if (graded && val === q.answer) b.classList.add("is-right");
       if (graded && state.selected === i && val !== q.answer) b.classList.add("is-wrong");
       if (graded) b.disabled = true;
-      if (state.selected === i) b.setAttribute("aria-pressed", "true");
       box.appendChild(b);
     }
-  }
-
-  function updateButtons() {
-    document.getElementById("btn-submit").disabled = !(state.phase === "choose" && state.selected !== null);
-    document.getElementById("btn-next").disabled = state.phase !== "result";
   }
 
   function renderQuestion() {
@@ -1006,7 +990,6 @@
     result.textContent = "";
     result.className = "result";
     renderOptions();
-    updateButtons();
   }
 
   function showScreen(name) {
@@ -1042,6 +1025,7 @@
     state.selected = null;
     state.phase = "choose";
     state.roundNote = "";
+    clearTimeout(state.autoNext);
     state.sweepT = 0;
     state.pusherT = 0;
     state.pusherY = F.pusherMin;
@@ -1379,6 +1363,15 @@
   };
   var RAINBOW_FACE = ["#ff5a7a", "#ffd24a", "#5dff8a", "#5ad7ff", "#c084fc"];
   var spriteCache = {};
+  var coinArt = new Image();
+  var pusherArt = new Image();
+  var coinArtReady = false;
+  var pusherArtReady = false;
+  var COIN_FRAME = { gold: 0, silver: 1, ruby: 2, rainbow: 3 };
+  coinArt.onload = function () { coinArtReady = true; paintPreviewCoins(); };
+  pusherArt.onload = function () { pusherArtReady = true; };
+  coinArt.src = "coins.png";
+  pusherArt.src = "pusher.png";
 
   function coinSprite(type, t) {
     var frame = type === "rainbow" ? Math.floor(t * 8) % RAINBOW_FACE.length : 0;
@@ -1410,14 +1403,27 @@
     var faces = document.querySelectorAll(".coin-face");
     for (var i = 0; i < faces.length; i++) {
       var g = faces[i].getContext("2d");
+      var kind = faces[i].getAttribute("data-type") || "gold";
       g.imageSmoothingEnabled = false;
       g.clearRect(0, 0, 16, 16);
-      g.drawImage(coinSprite(faces[i].getAttribute("data-type") || "gold", 0), 0, 0);
+      if (coinArtReady) {
+        var frame = COIN_FRAME[kind] || 0;
+        var fw = coinArt.width / 4;
+        g.drawImage(coinArt, frame * fw, 0, fw, coinArt.height, 0, 0, 16, 16);
+      } else {
+        g.drawImage(coinSprite(kind, 0), 0, 0);
+      }
     }
     var knob = document.getElementById("knob");
     var kg = knob.getContext("2d");
     kg.imageSmoothingEnabled = false;
-    kg.drawImage(coinSprite("gold", 0), 0, 0);
+    if (coinArtReady) {
+      var fw2 = coinArt.width / 4;
+      kg.clearRect(0, 0, 16, 16);
+      kg.drawImage(coinArt, 0, 0, fw2, coinArt.height, 0, 0, 16, 16);
+    } else {
+      kg.drawImage(coinSprite("gold", 0), 0, 0);
+    }
   }
 
   function drawCoin(context, c, t) {
@@ -1426,7 +1432,13 @@
     var y = Math.round(c.y - size / 2);
     context.save();
     context.imageSmoothingEnabled = false;
-    context.drawImage(coinSprite(c.type || "gold", t || 0), x, y, size, size);
+    if (coinArtReady) {
+      var frame = COIN_FRAME[c.type] != null ? COIN_FRAME[c.type] : 0;
+      var fw = coinArt.width / 4;
+      context.drawImage(coinArt, frame * fw, 0, fw, coinArt.height, x, y, size, size);
+    } else {
+      context.drawImage(coinSprite(c.type || "gold", t || 0), x, y, size, size);
+    }
     context.restore();
   }
 
@@ -1458,16 +1470,25 @@
     }
 
     var py = state.pusherY;
-    ctx.fillStyle = "#b7b1a8";
-    ctx.fillRect(F.wall, 0, F.w - F.wall * 2, py);
-    ctx.fillStyle = "#6d675f";
-    for (var yy = 6; yy < py - 12; yy += 8) ctx.fillRect(F.wall, yy, F.w - F.wall * 2, 2);
-    ctx.fillStyle = "#fff6c8";
-    ctx.fillRect(F.wall, py - 12, F.w - F.wall * 2, 6);
-    ctx.fillStyle = "#ffbf2a";
-    ctx.fillRect(F.wall, py - 6, F.w - F.wall * 2, 6);
-    ctx.fillStyle = "#8a4b10";
-    ctx.fillRect(F.wall, py - 2, F.w - F.wall * 2, 2);
+    var plateW = F.w - F.wall * 2;
+    if (pusherArtReady) {
+      var plateH = Math.max(22, Math.round(plateW * pusherArt.height / pusherArt.width));
+      if (plateH > py) plateH = Math.max(12, Math.round(py));
+      ctx.fillStyle = "#9aa3b2";
+      ctx.fillRect(F.wall, 0, plateW, Math.max(0, py - plateH));
+      ctx.drawImage(pusherArt, F.wall, py - plateH, plateW, plateH);
+    } else {
+      ctx.fillStyle = "#b7b1a8";
+      ctx.fillRect(F.wall, 0, plateW, py);
+      ctx.fillStyle = "#6d675f";
+      for (var yy = 6; yy < py - 12; yy += 8) ctx.fillRect(F.wall, yy, plateW, 2);
+      ctx.fillStyle = "#fff6c8";
+      ctx.fillRect(F.wall, py - 12, plateW, 6);
+      ctx.fillStyle = "#ffbf2a";
+      ctx.fillRect(F.wall, py - 6, plateW, 6);
+      ctx.fillStyle = "#8a4b10";
+      ctx.fillRect(F.wall, py - 2, plateW, 2);
+    }
 
     var mx = Math.round(markerX());
     ctx.fillStyle = "rgba(255, 220, 100, .5)";
@@ -1929,32 +1950,32 @@
     beep(big ? 1320 : 990, 0.16, "triangle", 0.06, 0.1);
   }
 
-  function submit() {
-    if (state.phase !== "choose" || state.selected === null) return;
+  function submit(index) {
+    if (state.phase !== "choose") return;
     var q = currentQ();
-    var choice = q.options[state.selected];
+    state.selected = index;
+    var choice = q.options[index];
     state.phase = "result";
     var result = document.getElementById("result");
     if (choice === q.answer) {
       state.correct++;
       state.streak++;
       if (state.streak > state.bestStreak) state.bestStreak = state.streak;
-      var type = dropCoin(markerX());
-      var cheer = CHEERS[Math.floor(Math.random() * CHEERS.length)];
-      var zone = zoneName(sweepNorm());
+      dropCoin(markerX());
       result.className = "result good";
-      result.textContent = "答對了！金幣在這個位置落下！" + cheer + "這枚是" + TYPE_NAME[type] + "，從" + zone + "落下，掉出出口才會進錢包。";
+      result.textContent = "答對！金幣落下。";
       sfxCorrect();
     } else {
       state.streak = 0;
       result.className = "result bad";
-      result.textContent = "很接近！正確答案是" + q.answer + "，再試試下一題！";
+      result.textContent = "答錯，答案是 " + q.answer + "。";
       sfxWrong();
     }
     renderOptions();
-    updateButtons();
     renderHud();
     unlockCheck();
+    clearTimeout(state.autoNext);
+    state.autoNext = setTimeout(nextQ, 650);
   }
 
   function nextQ() {
@@ -1977,9 +1998,7 @@
   function onOption(e) {
     var btn = e.target.closest("button");
     if (!btn || state.phase !== "choose") return;
-    state.selected = Number(btn.dataset.i);
-    renderOptions();
-    updateButtons();
+    submit(Number(btn.dataset.i));
   }
 
   function anyModal() {
@@ -2000,15 +2019,8 @@
     if (letter >= "A" && letter <= "D") pick = letter.charCodeAt(0) - 65;
     if (pick >= 0) {
       if (state.phase !== "choose") return;
-      state.selected = pick;
-      renderOptions();
-      updateButtons();
       e.preventDefault();
-    } else if (e.key === "Enter") {
-      if (state.phase === "choose" && state.selected !== null) {
-        e.preventDefault();
-        submit();
-      }
+      submit(pick);
     }
   }
 
@@ -2073,8 +2085,6 @@
   document.getElementById("clear-restart").addEventListener("click", function () {
     document.getElementById("modal-restart").hidden = false;
   });
-  document.getElementById("btn-submit").addEventListener("click", submit);
-  document.getElementById("btn-next").addEventListener("click", nextQ);
   document.getElementById("options").addEventListener("click", onOption);
   canvas.addEventListener("click", function () {
     if (state.screen !== "game") return;
