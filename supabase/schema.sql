@@ -50,7 +50,7 @@ create policy "ratings read" on public.ratings for select using (true);
 create policy "ratings insert self" on public.ratings for insert with check (auth.uid() = user_id);
 create policy "ratings update self" on public.ratings for update using (auth.uid() = user_id);
 
-create policy "pets read self" on public.pets for select using (auth.uid() = user_id);
+create policy "pets read" on public.pets for select using (true);
 create policy "pets insert self" on public.pets for insert with check (auth.uid() = user_id);
 create policy "pets update self" on public.pets for update using (auth.uid() = user_id);
 

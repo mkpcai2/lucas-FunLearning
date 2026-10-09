@@ -233,6 +233,7 @@ function boardRows(rows, mode, max) {
       const name = row.username || I18n.t("unknown");
       return `<li class="rank-${index + 1}${mineClass}">
         <span class="rank">${index + 1}</span>
+        ${avatarHtml(row.userId, name)}
         <span class="player">${esc(name)}</span>
         <span class="pts">${esc(score)}</span>
       </li>`;
@@ -241,12 +242,21 @@ function boardRows(rows, mode, max) {
 }
 
 const PET_STAGES = ["bubble", "baby", "grow", "adult", "scholar"];
-const PET_SPECIES = ["cat", "dog", "rabbit"];
+const PET_SPECIES = ["tabby", "fluff", "dog"];
 
 function petSrc(species, stage) {
   const kind = PET_SPECIES.includes(species) ? species : "dog";
   const form = PET_STAGES[stage] || "bubble";
-  return `assets/pets/${kind}/${form}.png?v=1`;
+  return `assets/pets/${kind}/${form}.png?v=2`;
+}
+
+function avatarHtml(userId, name) {
+  const pet = Store.petCard(userId);
+  const label = tf("pet.avatar", { name });
+  const face = pet
+    ? `<img src="${petSrc(pet.species, pet.stage)}" alt="">`
+    : `<span class="avatar-empty" aria-hidden="true"></span>`;
+  return `<a class="avatar" href="#/u/${encodeURIComponent(userId)}" aria-label="${esc(label)}">${face}</a>`;
 }
 
 function renderPetChoice() {
@@ -324,11 +334,15 @@ function miniRates() {
 function miniScores() {
   const rows = Store.globalBoard().slice(0, 5);
   const list = rows.length
-    ? `<ol class="mini-board">${rows.map((row, index) => `<li>
+    ? `<ol class="mini-board mini-players">${rows.map((row, index) => {
+      const name = row.username || I18n.t("unknown");
+      return `<li>
         <span class="rank">${index + 1}</span>
-        <span>${esc(row.username || I18n.t("unknown"))}</span>
+        ${avatarHtml(row.userId, name)}
+        <span>${esc(name)}</span>
         <span>${esc(String(row.points))}</span>
-      </li>`).join("")}</ol>`
+      </li>`;
+    }).join("")}</ol>`
     : `<p>${esc(I18n.t("side.emptyScores"))}</p>`;
   return `<section class="panel side-card">
     <h2>${esc(I18n.t("side.scores"))}</h2>
@@ -476,13 +490,14 @@ function renderGame(id) {
 function renderBoard() {
   openGameId = null;
   const rows = Store.globalBoard();
-  const lead = rows[0]
+  const leader = rows[0];
+  const lead = leader
     ? `<section class="champion">
-        <img src="assets/mascot.png?v=corgi" alt="">
+        ${avatarHtml(leader.userId, leader.username || I18n.t("unknown"))}
         <div>
           <p>${esc(I18n.t("board.first"))}</p>
-          <strong>${esc(rows[0].username || I18n.t("unknown"))}</strong>
-          <span>${esc(tf("board.firstMeta", rows[0]))}</span>
+          <strong>${esc(leader.username || I18n.t("unknown"))}</strong>
+          <span>${esc(tf("board.firstMeta", leader))}</span>
         </div>
       </section>`
     : "";
@@ -494,6 +509,36 @@ function renderBoard() {
     </header>
     ${lead}
     <section class="panel">${boardRows(rows, "global")}</section>`;
+}
+
+function renderUserPet(id) {
+  openGameId = null;
+  const person = Store.userById(id);
+  if (!person) {
+    app.innerHTML = missing(I18n.t("pet.missing"));
+    return;
+  }
+  const pet = Store.petCard(person.id);
+  const mine = Store.current();
+  const name = person.username || I18n.t("unknown");
+  const home = mine && mine.id === person.id
+    ? `<a class="btn btn-cream" href="#/">${esc(I18n.t("pet.mine"))}</a>`
+    : "";
+  const body = pet
+    ? `<p class="pet-stage">${esc(I18n.t("pet.species." + pet.species))} · ${esc(I18n.t("pet." + pet.id))} · ${esc(tf("pet.xp", { n: pet.xp }))}</p>
+      <div class="pet-bar" role="progressbar" aria-valuenow="${pet.xp}" aria-valuemin="0" aria-valuemax="${pet.next || pet.xp}" aria-label="${esc(I18n.t("pet." + pet.id))}"><span style="width:${Math.max(0, Math.min(100, Math.round(pet.into * 100)))}%"></span></div>
+      <p>${esc(pet.next == null ? I18n.t("pet.max") : tf("pet.next", { left: pet.next - pet.xp }))}</p>
+      <div class="pet-stage-wrap">
+        <img class="pet-still" src="${petSrc(pet.species, pet.stage)}" alt="">
+      </div>`
+    : `<p>${esc(I18n.t("pet.none"))}</p>`;
+  app.innerHTML = `
+    <a class="btn btn-cream btn-small back" href="#/board">${iconBack()} ${esc(I18n.t("nav.board"))}</a>
+    <section class="pet-room panel">
+      <h1>${esc(tf("pet.look", { name }))}</h1>
+      ${body}
+      ${home}
+    </section>`;
 }
 
 function renderAuth(mode) {
@@ -579,6 +624,7 @@ function render() {
   else if (head === "c") renderHub();
   else if (head === "g") renderGame(id);
   else if (head === "board") renderBoard();
+  else if (head === "u") renderUserPet(id);
   else if (head === "rates") renderRates();
   else if (head === "login") renderAuth("login");
   else if (head === "register") renderAuth("register");

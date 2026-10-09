@@ -53,19 +53,14 @@ const Store = (() => {
       at: stamp(row.at),
     }));
     state.session = sessionResult.data.session ? sessionResult.data.session.user.id : null;
-    state.pets = [];
-    if (state.session) {
-      const pet = await db.from("pets").select("user_id,species,xp,day,day_xp").eq("user_id", state.session).maybeSingle();
-      if (pet.data) {
-        state.pets = [{
-          userId: pet.data.user_id,
-          species: pet.data.species || "",
-          xp: pet.data.xp || 0,
-          day: pet.data.day || "",
-          dayXp: pet.data.day_xp || 0,
-        }];
-      }
-    }
+    const pets = await db.from("pets").select("user_id,species,xp,day,day_xp");
+    state.pets = (pets.data || []).map((row) => ({
+      userId: row.user_id,
+      species: row.species || "",
+      xp: row.xp || 0,
+      day: row.day || "",
+      dayXp: row.day_xp || 0,
+    }));
   }
 
   function persistPet(row) {
@@ -302,7 +297,14 @@ const Store = (() => {
   const PET_DAILY = 100;
   const PET_NEED = [0, 100, 400, 1100, 2500];
   const PET_IDS = ["bubble", "baby", "grow", "adult", "scholar"];
-  const PET_SPECIES = ["cat", "dog", "rabbit"];
+  const PET_SPECIES = ["tabby", "fluff", "dog"];
+  const PET_REPLACE = { cat: "tabby", rabbit: "dog" };
+
+  function replaceRetired(row) {
+    if (!row || !PET_REPLACE[row.species]) return;
+    row.species = PET_REPLACE[row.species];
+    persistPet(row);
+  }
 
   function todayKey() {
     const now = new Date();
@@ -326,6 +328,7 @@ const Store = (() => {
 
   function petRow(user) {
     const row = findPet(user);
+    replaceRetired(row);
     if (!row || !row.species) return null;
     const today = todayKey();
     if (row.day !== today) {
@@ -344,6 +347,7 @@ const Store = (() => {
       existing.species = "dog";
       persistPet(existing);
     }
+    replaceRetired(existing);
     const row = petRow(user);
     if (!row) return { needsChoice: true };
     const stage = stageIndex(row.xp);
@@ -403,6 +407,34 @@ const Store = (() => {
     };
   }
 
+  function shownSpecies(species) {
+    if (!species) return "";
+    if (PET_REPLACE[species]) return PET_REPLACE[species];
+    return PET_SPECIES.includes(species) ? species : "dog";
+  }
+
+  function petCard(userId) {
+    const row = (state.pets || []).find((item) => item.userId === userId);
+    const species = row ? shownSpecies(row.species) : "";
+    if (!species) return null;
+    const stage = stageIndex(row.xp || 0);
+    const next = stage < PET_NEED.length - 1 ? PET_NEED[stage + 1] : null;
+    const prev = PET_NEED[stage];
+    const xp = row.xp || 0;
+    return {
+      species,
+      id: PET_IDS[stage],
+      stage,
+      xp,
+      next,
+      into: next == null ? 1 : (xp - prev) / (next - prev),
+    };
+  }
+
+  function userById(userId) {
+    return state.users.find((user) => user.id === userId) || null;
+  }
+
   function mySummary() {
     const user = current();
     if (!user) return null;
@@ -415,6 +447,6 @@ const Store = (() => {
     cloud: Boolean(db),
     ready: db ? pull().catch(() => {}) : Promise.resolve(),
     current, register, login, logout, submitScore, gameBoard, globalBoard, myBest, mySummary,
-    ratingOf, myRating, setRating, petView, choosePet, gainPetXp,
+    ratingOf, myRating, setRating, petView, petCard, userById, choosePet, gainPetXp,
   };
 })();
